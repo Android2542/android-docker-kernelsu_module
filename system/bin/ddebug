@@ -1,0 +1,85 @@
+#!/bin/bash
+
+# 检测/sys/fs/cgroup目录是否存在，不存在则创建
+if [ ! -d "/sys/fs/cgroup" ]; then
+  mkdir /sys/fs/cgroup
+  echo -e "\033[31mcgroup目录开始创建\033[0m"
+else
+  echo -e "\033[32mcgroup目录已存在\033[0m"
+fi
+# 检测cgroup是否被挂载
+if mount | grep -q "cgroup on /sys/fs/cgroup type tmpfs (rw,seclabel,relatime,mode=755)"; then
+    echo -e "\033[32mcgroup目录已被挂载\033[0m"
+else
+    echo -e "\033[31mcgroup目录开始挂载\033[0m"
+    mount -t tmpfs -o uid=0,gid=0,mode=0755 cgroup /sys/fs/cgroup
+fi
+# 检测/sys/fs/cgroup/systemd目录是否存在，不存在则创建
+if [ ! -d "/sys/fs/cgroup/systemd" ]; then
+  mkdir /sys/fs/cgroup/systemd
+  echo -e "\033[31msystemd目录开始创建\033[0m"
+else
+  echo -e "\033[32msystemd目录已存在\033[0m"
+fi
+# 检测/sys/fs/cgroup/systemd目录是否被挂载，没有则挂载systemd
+if [ -z "$(mount | grep "/sys/fs/cgroup/systemd")" ]; then
+  mount -t cgroup -o none,name=systemd systemd /sys/fs/cgroup/systemd
+  echo -e "\033[31msystemd目录开始挂载\033[0m"
+else
+  echo -e "\033[32msystemd目录已被挂载\033[0m"
+fi
+
+
+# 检测/proc/sys/fs/binfmt_misc目录是否存在，不存在则创建
+if [ ! -d "/proc/sys/fs/binfmt_misc" ]; then
+  mkdir /proc/sys/fs/binfmt_misc
+  echo -e "\033[31mbinfmt_misc目录开始创建\033[0m"
+else
+  echo -e "\033[32mbinfmt_misc目录已存在\033[0m"
+fi
+# 检测/proc/sys/fs/binfmt_misc目录是否被挂载，没有则挂载systemd
+if [ -z "$(mount | grep "/proc/sys/fs/binfmt_misc")" ]; then
+  mount binfmt_misc -t binfmt_misc /proc/sys/fs/binfmt_misc
+  echo -e "\033[31mbinfmt_misc目录开始挂载\033[0m"
+else
+  echo -e "\033[32msbinfmt_misc目录已被挂载\033[0m"
+fi
+# 检测/proc/sys/fs/binfmt_misc/status文件是否存在或内容为1或enabled，不存在或不为1和enabled则执行echo 1 > /proc/sys/fs/binfmt_misc/status
+if [ ! -f "/proc/sys/fs/binfmt_misc/status" ] || ! grep -qE '^(1|enabled)$' /proc/sys/fs/binfmt_misc/status; then
+    echo "1" > /proc/sys/fs/binfmt_misc/status
+    echo -e "\033[31mbinfmt_misc/status开始启用\033[0m"
+else
+    echo -e "\033[32mbinfmt_misc/status已启用\033[0m"
+fi
+
+
+# 检测/data/home目录是否存在，不存在则创建
+if [ ! -d "/data/home" ]; then
+  mkdir /data/home
+  echo -e "\033[31mhome目录开始创建\033[0m"
+else
+  echo -e "\033[32mhome目录已存在\033[0m"
+fi
+# 检测/data/home/.dockerroute文件是否存在，不存在则创建
+dockerroute_path="/data/home/.dockerroute"
+if [ ! -e "$dockerroute_path" ]; then
+  touch "$dockerroute_path"  # 创建文件
+  echo "#auto=1 static=2 none=3" >> "$dockerroute_path"  # 添加内容到文件
+  echo "status=1" >> "$dockerroute_path"
+  echo 'interface="wlan0"' >> "$dockerroute_path"
+  echo 'gateway="192.168.1.1"' >> "$dockerroute_path"
+  echo -e "\033[31m/data/home/.dockerroute 文件已创建并内容已添加\033[0m"
+else
+  echo -e "\033[32m/data/home/.dockerroute 文件已存在\033[0m"
+fi
+
+
+# 检测/data/docker/run/docker.pid文件是否存在，存在则删除
+if [ -f "/data/docker/run/docker.pid" ]; then
+  rm -f /data/docker/run/docker.pid
+  echo -e "\033[32mdocker.pid文件已删除\033[0m"
+else
+  echo -e "\033[31mdocker.pid文件不存在\033[0m"
+fi
+
+

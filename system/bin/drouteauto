@@ -1,0 +1,41 @@
+#!/bin/bash
+# dnet 脚本
+
+# droute 脚本内容
+droute() {
+    # 获取参数
+    local gateway=$1
+    local interface=$2
+
+    # 执行 droute 脚本的操作
+    ip route delete default
+    ip route add default via $gateway dev $interface
+    ip rule add from all lookup main pref 30000
+}
+
+# 获取所有接口
+interfaces=$(route -n | awk '{if ($8 != "Iface" && $8 != "docker0") print $8}')
+#interfaces=$(route -n | awk '{if ($8 != "Iface" && $8 != "docker0" && $8 !~ /^br/) print $8}')
+# 检查是否有 wlan0 接口
+if [[ $(echo $interfaces | grep wlan0) ]]; then
+    interface="wlan0"
+else
+    # 按照 sudo route -n 的顺序选择接口
+    interface=$(echo $interfaces | awk '{print $1}')
+fi
+
+# 获取接口的网关地址
+gateway=$(traceroute -i $interface -n -m 1 223.5.5.5 | tail -n 1 | awk '{print $2}')
+
+# 如果网关地址获取为 *，则将网关地址设置为 0.0.0.0
+if [[ $gateway == "*" ]]; then
+    gateway="0.0.0.0"
+fi
+
+# 输出选择的接口和网关地址
+echo "选择的接口: $interface"
+echo "网关地址: $gateway"
+
+# 调用 droute 函数，将网关和接口作为参数传递
+droute $gateway $interface
+

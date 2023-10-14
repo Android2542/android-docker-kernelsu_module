@@ -1,0 +1,19 @@
+#!/bin/bash
+file_path="/data/home/.dockerroute"
+
+if [ -e "$file_path" ]; then
+  source "$file_path"  # 读取.dockerroute变量
+  if [ "$status" -eq 1 ]; then
+    echo -e "路由模式:\033[32mauto\033[0m"
+    drouteauto
+  elif [ "$status" -eq 2 ]; then
+    echo -e "路由模式:\033[32mstatic\033[0m"
+    drouteset "$gateway" "$interface"
+  elif [ "$status" -eq 3 ]; then
+    echo -e "路由模式:\033[32mnone\033[0m 不配置默认路由"
+  else
+    echo -e "\033[31mstatus值错误\033[0m"
+  fi
+else
+  echo -e "\033[31mdockerroute文件不存在，检查/data/home/.dockerroute文件\033[0m"
+fi

@@ -1,0 +1,8 @@
+#! /bin/bash
+# 检测/data/home/.dockerroute文件是否存在，不存在则创建
+dockerroute_path="/data/home/.dockerroute"
+if [ ! -e "$dockerroute_path" ]; then
+  echo -e "\033[31m/data/home/.dockerroute 文件不存在\033[0m"
+else
+  nano $dockerroute_path
+fi

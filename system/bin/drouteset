@@ -1,0 +1,6 @@
+#! /bin/bash
+ip route delete default
+ip route add default via $1 dev $2
+ip rule add from all lookup main pref 30000
+echo "选择的接口: $2"
+echo "网关地址: $1"

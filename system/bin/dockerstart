@@ -1,0 +1,38 @@
+#!/bin/bash
+DEFAULT_ROUTE=$(route | grep '^default')
+
+#screen -S docker -d -m sudo dockerd
+if docker ps > /dev/null 2>&1; then
+    echo ""
+    echo -e "Docker\e[32m在线\e[0m"
+else
+    echo ""
+    echo -e "Docker\e[31m离线\e[0m"
+    ddebug
+    echo "尝试启动Docker"
+    dscreen -S docker -d -m dockerd
+sleep 5
+if docker ps > /dev/null 2>&1; then
+    echo ""
+    echo -e "Docker\e[32m在线\e[0m"
+else
+     echo ""
+     echo -e "Docker\e[31m离线\e[0m"
+     echo "无法启动Docker，请检查日志或手动启动"
+fi
+
+
+if [ -n "$DEFAULT_ROUTE" ]; then
+    GATEWAY=$(echo $DEFAULT_ROUTE | awk '{print $2}')
+    INTERFACE=$(echo $DEFAULT_ROUTE | awk '{print $NF}')
+    echo "默认网关已设置"
+    echo "当前网关: $GATEWAY"
+    echo "当前接口: $INTERFACE"
+else
+    echo "默认网关未设置"
+    echo "尝试配置默认网关"
+    droute
+fi
+
+fi
+
